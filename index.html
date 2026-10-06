@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncGastro - Automação para Restaurantes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ea580c',
+                        primaryHover: '#c2410c',
+                        secondary: '#1e293b',
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'float-delayed': 'float 3s ease-in-out 1.5s infinite',
+                        'wiggle': 'wiggle 2s linear infinite',
+                        'slide-up': 'slideUp 0.6s ease-out forwards',
+                        'pulse-glow': 'pulseGlow 2s infinite'
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' }
+                        },
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(234, 88, 12, 0.4)' },
+                            '50%': { boxShadow: '0 0 30px rgba(234, 88, 12, 0.8)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .nav-link.active { border-bottom: 3px solid #ea580c; color: #ea580c; font-weight: 600; }
+        .legal-text { font-family: "Times New Roman", Times, serif; }
+        .doc-field { background-color: #fef08a; padding: 0 4px; border-radius: 2px; min-width: 100px; display: inline-block; font-weight: bold; border-bottom: 1px dashed #ca8a04; }
+        .doc-field.filled { background-color: transparent; border-bottom: none; color: #1e293b; }
+        .auto-field { background-color: #bfdbfe; padding: 0 4px; border-radius: 2px; font-weight: bold; color: #1e40af; display: inline-block; }
+        
+        /* Base hidden state for animations */
+        .anim-enter { opacity: 0; }
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center cursor-pointer hover:scale-105 transition transform relative w-56 md:w-72 h-full" onclick="switchTab('inicio')">
+                    <img src="./assets/logo.png" alt="SyncGastro Logo" class="absolute top-0 -left-4 sm:-left-6 lg:-left-8 h-20 md:h-28 w-auto drop-shadow-xl z-[100]" style="max-width: none;">
+                </div>
+                <nav class="hidden md:flex space-x-8 h-full">
+                    <button onclick="switchTab('inicio')" class="nav-link active h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="inicio">Início</button>
+                    <button onclick="switchTab('salao')" class="nav-link h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="salao">Salão & Mesas</button>
+                    <button onclick="switchTab('cozinha')" class="nav-link h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="cozinha">KDS Setorizado</button>
+                    <button onclick="switchTab('bar')" class="nav-link h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="bar">Caixa & Garçons</button>
+                    <button onclick="switchTab('precos')" class="nav-link h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="precos">Orçamento Flexível</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow">
+        
+        <!-- TAB 1: INÍCIO -->
+        <section id="inicio" class="tab-content active relative bg-gradient-to-r from-secondary via-gray-800 to-secondary animate-gradient-x text-white overflow-hidden">
+            <!-- Background Abstract Floating Elements -->
+            <div class="absolute top-10 left-10 w-32 h-32 bg-primary rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-float"></div>
+            <div class="absolute bottom-10 right-20 w-48 h-48 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-float-delayed"></div>
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center lg:pt-32 lg:pb-32 relative z-10">
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 anim-enter">
+                    O Fim dos Pedidos Atrasados,<br>
+                    <span class="text-primary">Contas Erradas e Gargalos na Cozinha.</span>
+                </h1>
+                <p class="mt-4 max-w-3xl mx-auto text-xl text-gray-300 mb-10 anim-enter delay-100">
+                    Seu aplicativo próprio, cardápio personalizado, e roteamento inteligente: pratos vão para as colunas da cozinha, sucos para o bar, e chamados direto para a praça do garçom.
+                </p>
+                <div class="flex justify-center mb-12 anim-enter delay-200">
+                    <button onclick="switchTab('precos')" class="bg-primary hover:bg-primaryHover text-white font-bold py-4 px-8 rounded-full shadow-lg transform transition hover:scale-110 animate-pulse-glow text-lg flex items-center">
+                        <i class="fa-solid fa-calculator mr-2"></i> Calcular Orçamento do Meu Restaurante
+                    </button>
+                </div>
+
+                <!-- Hero Floating Illustration -->
+                <div class="mt-8 flex justify-center gap-6 anim-enter delay-300">
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 animate-float">
+                        <i class="fa-solid fa-mobile-screen text-4xl text-white mb-2"></i>
+                        <p class="text-xs font-bold">App do Cliente</p>
+                    </div>
+                    <div class="bg-primary/20 backdrop-blur-md p-4 rounded-xl border border-primary/50 animate-float-delayed transform translate-y-4">
+                        <i class="fa-solid fa-fire-burner text-4xl text-primary mb-2"></i>
+                        <p class="text-xs font-bold text-white">KDS Cozinha</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 animate-float">
+                        <i class="fa-solid fa-cash-register text-4xl text-white mb-2"></i>
+                        <p class="text-xs font-bold">Caixa / Admin</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SALÃO & MESAS -->
+        <section id="salao" class="tab-content py-16 bg-white overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 anim-enter">
+                    <h2 class="text-3xl font-extrabold text-secondary">Salão & Mesas</h2>
+                    <p class="mt-4 text-lg text-gray-500">A experiência do seu restaurante, com a sua identidade.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                    <!-- Illustration -->
+                    <div class="anim-enter delay-100">
+                        <div class="bg-gray-100 p-8 rounded-2xl shadow-inner relative flex justify-center items-center h-96">
+                            <div class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent rounded-2xl"></div>
+                            
+                            <!-- Floating QR Card -->
+                            <div class="bg-white p-6 rounded-xl shadow-2xl text-center w-64 border-2 border-gray-200 animate-float relative z-10">
+                                <div class="absolute -top-3 -right-3 bg-green-500 w-6 h-6 rounded-full animate-ping"></div>
+                                <div class="absolute -top-3 -right-3 bg-green-500 w-6 h-6 rounded-full border-2 border-white"></div>
+                                
+                                <i class="fa-solid fa-qrcode text-8xl text-secondary mb-4"></i>
+                                <h3 class="font-bold text-xl mb-2">Mesa 12</h3>
+                                <p class="text-sm text-gray-500 mb-4">Escaneie para acessar o App do [Seu Restaurante]</p>
+                                <div class="bg-primary text-white text-xs font-bold py-1 px-3 rounded-full inline-block animate-pulse">NFC Integrado</div>
+                            </div>
+                            
+                            <!-- Background Decor -->
+                            <div class="absolute bottom-10 left-10 bg-white p-3 rounded-lg shadow-lg rotate-12 opacity-60">
+                                <i class="fa-solid fa-burger text-3xl text-orange-400"></i>
+                            </div>
+                            <div class="absolute top-10 right-10 bg-white p-3 rounded-lg shadow-lg -rotate-12 opacity-60">
+                                <i class="fa-solid fa-martini-glass-citrus text-3xl text-pink-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Text Content -->
+                    <div>
+                        <ul class="space-y-8">
+                            <li class="flex items-start anim-enter delay-100">
+                                <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white text-xl transform transition hover:rotate-12">
+                                    <i class="fa-solid fa-store"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-bold text-gray-900">App com a sua Identidade Visual</h3>
+                                    <p class="mt-2 text-gray-600">O sistema é totalmente personalizado (white-label). O cliente acessa o cardápio digital com o nome da sua marca, visualizando pratos detalhados com seus respectivos ingredientes.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start anim-enter delay-200">
+                                <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white text-xl transform transition hover:scale-110">
+                                    <i class="fa-solid fa-percent"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-bold text-gray-900">Taxas de Serviço Dinâmicas</h3>
+                                    <p class="mt-2 text-gray-600">Automação completa na cobrança: defina valores e regras de taxa de serviço diferentes para cada mesa ou para períodos específicos do dia (ex: almoço vs happy hour).</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start anim-enter delay-300">
+                                <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-md bg-primary text-white text-xl transform transition hover:-rotate-12">
+                                    <i class="fa-solid fa-wallet"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-xl font-bold text-gray-900">Fechamento Direto e Segregado</h3>
+                                    <p class="mt-2 text-gray-600">A mesa é unificada, mas o sistema separa a conta por cliente automaticamente. O pagamento via PIX direto pelo celular é um recurso <strong>opcional</strong>, permitindo que o restaurante escolha entre o pagamento na mesa ou o fechamento tradicional no caixa/maquininha.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: COZINHA -->
+        <section id="cozinha" class="tab-content py-16 bg-gray-50 overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-extrabold text-secondary mb-4 anim-enter">KDS Setorizado (Cozinha e Bar)</h2>
+                <p class="text-lg text-gray-500 max-w-3xl mx-auto mb-12 anim-enter delay-100">
+                    Módulos escaláveis de produção. A Cozinha pode separar os pedidos em colunas de Pratos ou Saladas. O Bar exibe apenas as bebidas. Cada tela, uma função específica.
+                </p>
+
+                <!-- CSS Animated KDS Illustration -->
+                <div class="flex flex-col md:flex-row justify-center gap-6 lg:gap-10 anim-enter delay-200 perspective-1000">
+                    
+                    <!-- KDS Screen 1: Cozinha -->
+                    <div class="bg-gray-900 p-4 rounded-xl shadow-2xl border-t-8 border-primary w-full max-w-sm mx-auto animate-float transform transition hover:scale-105">
+                        <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                            <h3 class="text-white font-bold"><i class="fa-solid fa-fire mr-2 text-red-500"></i> Tela Cozinha</h3>
+                            <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">2 Pedidos</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <!-- Coluna Pratos -->
+                            <div class="flex-1 bg-gray-800 rounded p-2">
+                                <p class="text-xs text-gray-400 font-bold mb-2 uppercase text-center">Pratos</p>
+                                <div class="bg-white p-2 rounded shadow mb-2 border-l-4 border-red-500">
+                                    <p class="text-sm font-bold text-gray-800">1x Bife Ancho</p>
+                                    <p class="text-xs text-gray-500">Mesa 12 <span class="float-right text-red-500 font-bold">12:30</span></p>
+                                </div>
+                                <div class="bg-gray-200 p-2 rounded shadow opacity-60 border-l-4 border-yellow-500">
+                                    <p class="text-sm font-bold text-gray-800">1x Salmão</p>
+                                    <p class="text-xs text-gray-500">Mesa 04</p>
+                                </div>
+                            </div>
+                            <!-- Coluna Saladas -->
+                            <div class="flex-1 bg-gray-800 rounded p-2">
+                                <p class="text-xs text-gray-400 font-bold mb-2 uppercase text-center">Saladas</p>
+                                <div class="bg-white p-2 rounded shadow mb-2 border-l-4 border-green-500">
+                                    <p class="text-sm font-bold text-gray-800">1x Caesar</p>
+                                    <p class="text-xs text-gray-500">Mesa 12</p>
+                                    <p class="text-xs text-red-500 font-bold mt-1 bg-red-50 inline-block px-1 rounded">Sem Molho</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KDS Screen 2: Bar -->
+                    <div class="bg-gray-900 p-4 rounded-xl shadow-2xl border-t-8 border-blue-500 w-full max-w-sm mx-auto animate-float-delayed transform transition hover:scale-105 mt-8 md:mt-0">
+                        <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                            <h3 class="text-white font-bold"><i class="fa-solid fa-martini-glass mr-2 text-blue-400"></i> Tela Bar</h3>
+                            <span class="text-xs bg-blue-900 text-blue-200 px-2 py-1 rounded animate-pulse">NOVO</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="flex-1 bg-gray-800 rounded p-2">
+                                <p class="text-xs text-gray-400 font-bold mb-2 uppercase text-center">Drinks</p>
+                                <div class="bg-blue-50 p-2 rounded shadow border-l-4 border-blue-500 animate-pulse">
+                                    <p class="text-sm font-bold text-gray-800">2x Gin Tônica</p>
+                                    <p class="text-xs text-gray-500">Mesa 12 <span class="float-right text-blue-600 font-bold">00:15</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: CAIXA E GARCONS -->
+        <section id="bar" class="tab-content py-16 bg-white overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16 anim-enter">
+                    <h2 class="text-3xl font-extrabold text-secondary">Garçons Setorizados e Gestão no Caixa</h2>
+                    <p class="mt-4 text-lg text-gray-500">Equipamentos e roteamento escalados conforme o tamanho da sua equipe.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-16">
+                    
+                    <!-- Garçom Block -->
+                    <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200 relative overflow-hidden anim-enter delay-100 group">
+                        <!-- Abstract BG -->
+                        <div class="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition">
+                            <i class="fa-solid fa-mobile-screen text-9xl"></i>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="text-primary text-4xl"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <!-- Phone Mockup Illustration -->
+                            <div class="w-16 h-28 bg-gray-800 rounded-xl border-2 border-gray-700 p-1 relative animate-wiggle shadow-lg">
+                                <div class="bg-white w-full h-full rounded-lg overflow-hidden flex flex-col">
+                                    <div class="bg-primary h-2 w-full"></div>
+                                    <div class="p-1 mt-1 bg-red-100 rounded text-[6px] text-red-800 font-bold text-center border border-red-200">Mesa 08<br>Chamando</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Celular Individual por Garçom</h3>
+                        <p class="text-gray-600 mb-6 relative z-10">
+                            Cada garçom utiliza um smartphone corporativo do sistema. Quando o cliente chama de uma mesa, o sistema cruza a praça/setor e notifica unicamente o garçom responsável pela área.
+                        </p>
+                        <ul class="space-y-2 text-sm text-gray-500 font-medium relative z-10">
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Notificações sem poluição visual ou sonora</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Roteamento focado na mesa específica</li>
+                        </ul>
+                    </div>
+
+                    <!-- Caixa Block -->
+                    <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200 relative overflow-hidden anim-enter delay-200 group">
+                        <!-- Abstract BG -->
+                        <div class="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition">
+                            <i class="fa-solid fa-chart-pie text-9xl"></i>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="text-primary text-4xl"><i class="fa-solid fa-cash-register"></i></div>
+                            <!-- Dashboard Mockup Illustration -->
+                            <div class="w-24 h-16 bg-gray-800 rounded-lg p-1 flex gap-1 items-end animate-float shadow-lg">
+                                <div class="w-1/3 bg-green-500 rounded-sm h-full"></div>
+                                <div class="w-1/3 bg-primary rounded-sm h-1/2"></div>
+                                <div class="w-1/3 bg-blue-400 rounded-sm h-3/4"></div>
+                            </div>
+                        </div>
+
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">Telas de Caixa e Administração</h3>
+                        <p class="text-gray-600 mb-6 relative z-10">
+                            Instalamos telas no caixa ou área administrativa para que o gerente tenha a visão 360º do restaurante, monitorando fluxo de pedidos, fechamentos e desempenho em tempo real.
+                        </p>
+                        <ul class="space-y-2 text-sm text-gray-500 font-medium relative z-10">
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Telas dedicadas para a gestão do salão</li>
+                            <li><i class="fa-solid fa-check text-green-500 mr-2"></i> Fechamento e liberação de mesas imediata</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: PREÇOS E SIMULADOR -->
+        <section id="precos" class="tab-content py-16 bg-gray-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12 anim-enter">
+                    <h2 class="text-3xl font-extrabold text-secondary">Página de Orçamento</h2>
+                    <p class="text-lg text-gray-500 max-w-3xl mx-auto mt-4">Informe sua estrutura física e preencha seus dados para solicitar essa proposta personalizada no seu e-mail.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    <!-- Entradas do Orçamento -->
+                    <div class="lg:col-span-7 bg-white p-8 rounded-2xl shadow-lg border border-gray-200 anim-enter delay-100 relative">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                            <i class="fa-solid fa-sliders text-6xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-6 border-b pb-2 relative z-10"><i class="fa-solid fa-users-gear text-primary mr-2"></i> Configuração dos Módulos</h3>
+                        
+                        <!-- Módulos Obrigatórios -->
+                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Módulos Básicos (Obrigatórios)</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Cardápio / Mesas (Qtd)</label>
+                                <input type="number" id="qtd-mesas" min="1" value="25" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <p class="text-[10px] text-gray-500 mt-1">Placas QR Code ou NFC para autoatendimento.</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Cozinha (Telas KDS)</label>
+                                <input type="number" id="qtd-telas-coz" min="1" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <p class="text-[10px] text-gray-500 mt-1">Telas para produção e separação de pratos.</p>
+                            </div>
+                        </div>
+
+                        <!-- Módulos Opcionais -->
+                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Módulos Opcionais (Conforme seu Projeto)</h4>
+                        
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 mb-4 relative z-10">
+                            <label class="block text-xs font-bold text-blue-900 mb-2">Modelo de Serviço (Atendimento)</label>
+                            <div class="flex gap-4 mb-3">
+                                <label class="flex items-center text-sm cursor-pointer">
+                                    <input type="radio" name="tipo_servico" value="garcom" class="mr-2 text-primary" checked onchange="toggleGarcom(true); updateCalculator();"> Com Garçom
+                                </label>
+                                <label class="flex items-center text-sm cursor-pointer">
+                                    <input type="radio" name="tipo_servico" value="balcao" class="mr-2 text-primary" onchange="toggleGarcom(false); updateCalculator();"> Apenas Retirada (Food Truck)
+                                </label>
+                            </div>
+                            <div id="box-garcons">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Garçons (Qtd de Aparelhos)</label>
+                                <input type="number" id="qtd-garcons" min="0" value="4" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Bar / Bebidas (Telas)</label>
+                                <input type="number" id="qtd-telas-bar" min="0" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <p class="text-[10px] text-gray-500 mt-1">Coloque 0 caso não queira separação de bar.</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Caixa / Administrativo (Telas)</label>
+                                <input type="number" id="qtd-telas-admin" min="0" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <p class="text-[10px] text-gray-500 mt-1">Coloque 0 caso use tablet próprio.</p>
+                            </div>
+                        </div>
+
+                        <!-- Especificação de Projetos -->
+                        <div class="mb-8 relative z-10">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Especificação de Projeto e Segmentação</label>
+                            <textarea id="inp-especificacao" rows="3" placeholder="Ex: Na cozinha, exibir Pratos e Saladas em colunas distintas. No Bar, separar Sucos, Vitaminas e Drinks." class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition shadow-inner"></textarea>
+                        </div>
+
+                        <!-- Detalhamento -->
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-8 relative z-10 hover:shadow-md transition">
+                            <h4 class="font-bold text-blue-900 text-sm mb-2"><i class="fa-solid fa-boxes-stacked mr-1"></i> Orçamento Detalhado dos Ativos:</h4>
+                            <ul class="text-sm text-blue-800 space-y-2">
+                                <li class="flex justify-between border-b border-blue-200 pb-1">
+                                    <span><span class="font-bold">1</span> Aplicação Base (Licença)</span>
+                                    <span class="font-bold">R$ 10.000,00</span>
+                                </li>
+                                <li class="flex justify-between border-b border-blue-200 pb-1">
+                                    <span><span id="res-placas" class="font-bold">25</span> Placas de Mesa</span>
+                                    <span>(R$ 100 setup | R$ 50 mensais)</span>
+                                </li>
+                                <li class="flex justify-between border-b border-blue-200 pb-1">
+                                    <span><span id="res-telas" class="font-bold">3</span> Telas KDS/Caixa</span>
+                                    <span>(R$ 1.600 setup | R$ 600 mensais)</span>
+                                </li>
+                                <li class="flex justify-between pb-1">
+                                    <span><span id="res-celulares" class="font-bold">4</span> Celulares</span>
+                                    <span>(R$ 100 setup | R$ 100 mensais)</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Formulário de Captura / Pré-Cadastro -->
+                        <div class="pt-6 border-t border-gray-200 relative z-10">
+                            <h4 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-address-card text-primary mr-2"></i> Pré-Cadastro para Orçamento</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Nome Fantasia do Restaurante</label>
+                                    <input type="text" id="lead-nome-fantasia" placeholder="Ex: Sabor & Cia" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition" onkeyup="syncLeadToContract()">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Nome do Responsável</label>
+                                    <input type="text" id="lead-nome" placeholder="Ex: João Silva" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition" onkeyup="syncLeadToContract()">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">Telefone / WhatsApp</label>
+                                    <input type="tel" id="lead-telefone" placeholder="(00) 00000-0000" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-1">E-mail Comercial</label>
+                                    <input type="email" id="lead-email" placeholder="seu@email.com.br" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition">
+                                </div>
+                            </div>
+
+                            <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 text-left mt-6">
+                                <h5 class="font-bold text-orange-900 text-sm mb-1"><i class="fa-solid fa-route mr-1"></i> Projeto Personalizado & Crescimento</h5>
+                                <p class="text-sm text-orange-800">
+                                    Disponibilizamos <strong>visita técnica opcional</strong> para a elaboração de um projeto sob medida para a sua operação. Entendemos que essas métricas são essenciais e que <strong>cada projeto é meticulosamente pensado para alavancar o crescimento da sua empresa contratante</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumo Financeiro -->
+                    <div class="lg:col-span-5 bg-secondary text-white p-8 rounded-2xl shadow-lg relative flex flex-col justify-between anim-enter delay-200 overflow-hidden">
+                        
+                        <div class="absolute -right-20 -top-20 opacity-10 animate-pulse-glow w-64 h-64 bg-primary rounded-full filter blur-3xl"></div>
+
+                        <div class="relative z-10">
+                            <h3 class="text-2xl font-bold mb-6"><i class="fa-solid fa-file-invoice-dollar text-primary mr-2"></i> Proposta Comercial</h3>
+                            
+                            <div class="space-y-6">
+                                <div class="bg-gray-800 p-4 rounded-lg border-l-4 border-gray-500 transform transition hover:translate-x-2">
+                                    <p class="text-xs text-gray-400 uppercase tracking-wide">Investimento de Setup (Único)</p>
+                                    <p class="text-sm text-gray-400 mb-1">Aplicação + Configuração de Hardware</p>
+                                    <p class="text-3xl font-bold text-white" id="val-setup-total">R$ 17.700,00</p>
+                                </div>
+
+                                <div class="bg-gray-800 p-4 rounded-lg border-l-4 border-primary transform transition hover:translate-x-2 relative shadow-[0_0_15px_rgba(234,88,12,0.2)]">
+                                    <div class="absolute top-2 right-2 flex space-x-1">
+                                        <span class="flex h-3 w-3 relative">
+                                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                          <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-400 uppercase tracking-wide">Custo Fixo Mensal</p>
+                                    <p class="text-sm text-gray-400 mb-1">Manutenção e licenças por aparelho</p>
+                                    <p class="text-4xl font-extrabold text-primary" id="val-mensalidade">R$ 3.450,00</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 text-xs text-gray-400 p-3 bg-gray-900 rounded border border-gray-700">
+                                <i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-1 animate-pulse"></i> Visitas Técnicas presenciais operam somente via Pré-Contrato e pagamento de Sinal, sendo todo gasto de deslocamento pago pela Contratante.
+                            </div>
+                        </div>
+
+                        <div class="relative z-10 mt-8 text-center" id="box-envio-orcamento">
+                            <button onclick="enviarOrcamento()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-4 rounded-lg transition text-lg shadow-[0_0_15px_rgba(34,197,94,0.4)] hover:shadow-[0_0_25px_rgba(34,197,94,0.6)] transform hover:-translate-y-1">
+                                Enviar Orçamento <i class="fa-solid fa-paper-plane ml-2"></i>
+                            </button>
+                            <p class="text-xs text-gray-400 mt-3">Seus dados serão salvos (pré-cadastro) e você enviará as informações direto pelo WhatsApp ou E-mail.</p>
+                        </div>
+
+                        <div id="box-pos-envio" class="relative z-10 mt-8 text-center hidden">
+                            <h4 class="font-bold text-white mb-2 text-lg">Pré-Cadastro Salvo!</h4>
+                            <p class="text-sm text-gray-300 mb-4">Escolha por onde deseja enviar as informações para nosso especialista:</p>
+                            
+                            <div class="flex justify-center gap-4 mb-6">
+                                <a id="link-whatsapp" href="#" target="_blank" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center shadow-lg">
+                                    <i class="fa-brands fa-whatsapp text-2xl mr-2"></i> Enviar
+                                </a>
+                                <a id="link-email" href="#" target="_blank" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition flex justify-center items-center shadow-lg">
+                                    <i class="fa-solid fa-envelope text-2xl mr-2"></i> E-mail
+                                </a>
+                            </div>
+
+                            <div class="border-t border-gray-700 pt-4 mt-4">
+                                <button onclick="agendarVisita()" class="w-full mb-3 bg-white text-secondary hover:bg-gray-100 font-bold py-3 px-4 rounded-lg transition text-sm">
+                                    Agendar Visita Técnica Opcional <i class="fa-solid fa-calendar-check ml-2"></i>
+                                </button>
+                                
+                                <p class="text-xs text-gray-400 mb-3 pb-2 border-b border-gray-700">O Contrato Legal com obrigações fiscais só é gerado mediante interesse real.</p>
+                                <button onclick="switchTab('contrato')" class="w-full bg-primary hover:bg-primaryHover text-white font-bold py-3 px-4 rounded-lg transition text-sm shadow-[0_0_15px_rgba(234,88,12,0.4)] transform hover:-translate-y-1">
+                                    Tenho real interesse - Ir p/ Contrato <i class="fa-solid fa-file-contract ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 6: CONTRATO E CHECKOUT -->
+        <section id="contrato" class="tab-content py-16 bg-white">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 anim-enter">
+                
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-extrabold text-secondary">Minuta do Contrato</h2>
+                    <p class="mt-2 text-gray-500">As regras financeiras calculadas no orçamento foram transcritas automaticamente para as cláusulas deste contrato digital.</p>
+                </div>
+
+                <!-- Formulário de Preenchimento Dinâmico -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8 shadow-sm">
+                    <h3 class="font-bold text-secondary mb-4 border-b pb-2"><i class="fa-solid fa-building-user text-primary mr-2"></i> Dados da Contratante (Seu Restaurante)</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Razão Social</label>
+                            <input type="text" id="inp-razao" placeholder="Ex: Restaurante Sabor Ltda" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nome Fantasia</label>
+                            <input type="text" id="inp-fantasia" placeholder="Ex: Sabor & Cia" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">CNPJ</label>
+                            <input type="text" id="inp-cnpj" placeholder="00.000.000/0001-00" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Endereço da Empresa Completo (Sede/Matriz)</label>
+                            <input type="text" id="inp-endereco" placeholder="Logradouro, Número, Complemento, Bairro, Cidade/UF, CEP" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Nome do Responsável / Rep. Legal</label>
+                            <input type="text" id="inp-admin-nome" placeholder="Nome Completo" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">CPF do Responsável</label>
+                            <input type="text" id="inp-admin-cpf" placeholder="000.000.000-00" class="w-full border-gray-300 rounded-md shadow-sm p-2 focus:ring-primary focus:border-primary border transition" onkeyup="syncFormToContract()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documento Contratual Completo -->
+                <div class="bg-white border border-gray-300 shadow-xl p-8 md:p-12 h-[600px] overflow-y-auto rounded-lg legal-text text-sm leading-relaxed mb-8 relative text-justify transition-all">
+                    
+                    <h3 class="text-center font-bold text-lg mb-6 uppercase">INSTRUMENTO PARTICULAR DE PRESTAÇÃO DE SERVIÇOS DE TECNOLOGIA, LICENCIAMENTO DE SOFTWARE E LOCAÇÃO DE EQUIPAMENTOS</h3>
+
+                    <h4 class="font-bold mt-4 mb-2 uppercase">DAS PARTES CONTRATANTES</h4>
+                    <p class="mb-4"><strong>CONTRATADA:</strong> EDINO FERREIRA BENTO JUNIOR, pessoa jurídica de direito privado (MEI), inscrita no CNPJ sob o nº 36.398.976/0001-01, operando sob o nome fantasia <strong>SyncGastro Tecnologia</strong> (Startup), com sede estabelecida à <span class="doc-field">[Endereço Completo da Sede SyncGastro]</span>, doravante representada na forma de seus atos constitutivos por seu titular, Edino Ferreira Bento Junior, inscrito no CPF sob o nº 324.905.178-05;</p>
+                    <p class="mb-6"><strong>CONTRATANTE:</strong> <span class="out-razao doc-field">[RAZÃO SOCIAL DO RESTAURANTE]</span>, pessoa jurídica de direito privado, operando sob o nome fantasia <span class="out-fantasia doc-field">[Nome Fantasia]</span>, inscrita no CNPJ/MF sob o nº <span class="out-cnpj doc-field">[00.000.000/0001-00]</span>, com sede e endereço da empresa estabelecidos à <span class="out-endereco doc-field">[Logradouro, Número, Complemento, Bairro, Cidade/UF, CEP]</span>, neste ato representada por seu administrador/procurador legal qualificado ao final deste instrumento;</p>
+                    
+                    <p class="mb-6">Têm, entre si, justo e acordado o presente Contrato, que se regerá pelas cláusulas e condições seguintes:</p>
+
+                    <h4 class="font-bold mt-6 mb-2 uppercase">CLÁUSULA PRIMEIRA – DO OBJETO</h4>
+                    <p class="mb-2">1.1. O presente contrato tem por objeto o fornecimento, instalação e manutenção de infraestrutura tecnológica e licenciamento de software proprietário (SyncGastro) operando sob estrutura modular (KDS Cozinha, KDS Bar, Caixa, App Garçom, Cardápio Digital).</p>
+                    <p class="mb-2">1.2. O sistema garante o roteamento automático de pedidos configurados no cardápio, direcionando os itens segmentados (ex: Pratos, Saladas e Lanches) para as respectivas colunas e telas da Cozinha, assim como as bebidas (Sucos, Vitaminas e Drinks) para as telas exclusivas do Bar.</p>
+                    
+                    <p class="mb-6">1.3. A especificação quantitativa de equipamentos locados e ativos vinculados a este contrato é estipulada em: <span class="auto-field out-mesas">25</span> Placas de Mesas (QR/NFC), <span class="auto-field out-telas-coz">1</span> tela(s) funcional(is) operando na Cozinha, <span class="auto-field out-telas-bar">1</span> tela(s) operando no Bar, <span class="auto-field out-telas-admin">1</span> tela(s) para o Caixa/Administrativo, e <span class="auto-field out-garcons">4</span> aparelho(s) smartphone(s) de uso para Garçons.</p>
+
+                    <h4 class="font-bold mt-6 mb-2 uppercase">CLÁUSULA SEGUNDA – DA IMPLEMENTAÇÃO E PRAZOS</h4>
+                    <p class="mb-4">2.1. O prazo médio estimado para o desenvolvimento, parametrização do cardápio digital (com as separações de praças especificadas no projeto), entrega e configuração de todos os equipamentos é de até 30 (trinta) dias úteis após a confirmação do pagamento do Setup.</p>
+
+                    <h4 class="font-bold mt-6 mb-2 uppercase">CLÁUSULA TERCEIRA – DOS VALORES E CONDIÇÕES DE PAGAMENTO</h4>
+                    <p class="mb-4">Pelos serviços contratados e equipamentos locados, a CONTRATANTE pagará à CONTRATADA as importâncias discriminadas a seguir:</p>
+                    
+                    <p class="mb-2"><strong>3.1. Taxa de Implementação, Configuração e Setup (Única)</strong></p>
+                    <p class="mb-1 pl-4">a) Licenciamento e Setup da Aplicação Base (Software SyncGastro): Valor fixo de R$ 10.000,00 (dez mil reais);</p>
+                    <p class="mb-1 pl-4">b) Confecção e Configuração de Placas de Mesa (<span class="auto-field out-mesas">25</span> un. x R$ 100,00/un.): <span class="auto-field out-setup-placas">R$ 2.500,00</span>;</p>
+                    <p class="mb-1 pl-4">c) Fornecimento, Configuração (R$ 600) e Tela (R$ 1.000) para Cozinha, Bar e Admin (<span class="auto-field out-telas-total">3</span> un. totais x R$ 1.600,00/un.): <span class="auto-field out-setup-telas">R$ 4.800,00</span>;</p>
+                    <p class="mb-4 pl-4">d) Configuração de Celulares de Garçom (<span class="auto-field out-garcons">4</span> un. x R$ 100,00/un.): <span class="auto-field out-setup-cels">R$ 400,00</span>.</p>
+                    <p class="mb-6 font-bold pl-4">TOTAL SETUP: <span class="auto-field out-setup-total-calc">R$ 17.700,00</span>.</p>
+
+                    <p class="mb-2"><strong>3.2. Custo Fixo de Manutenção Mensal e Licenciamento (Recorrente)</strong></p>
+                    <p class="mb-2">A remuneração mensal fixa cobrirá licenciamento, atualizações de cardápio, manutenção de aparelhos e suporte operacional:</p>
+                    <p class="mb-1 pl-4">a) Manutenção e Licença de Placas/Mesas (<span class="auto-field out-mesas">25</span> un. x R$ 50,00/un.): <span class="auto-field out-mensal-placas">R$ 1.250,00</span>;</p>
+                    <p class="mb-1 pl-4">b) Manutenção, Locação e Licença de Telas KDS e Caixa (<span class="auto-field out-telas-total">3</span> un. x R$ 600,00/un.): <span class="auto-field out-mensal-telas">R$ 1.800,00</span>;</p>
+                    <p class="mb-4 pl-4">c) Manutenção, Locação e Licença de Celulares (<span class="auto-field out-garcons">4</span> un. x R$ 100,00/un.): <span class="auto-field out-mensal-cels">R$ 400,00</span>.</p>
+                    <p class="mb-6 font-bold pl-4 text-primary">VALOR MENSAL TOTAL: <span class="auto-field out-mensalidade-calc">R$ 3.450,00</span>.</p>
+
+                    <h4 class="font-bold mt-6 mb-2 uppercase">CLÁUSULA QUARTA – DOS SERVIÇOS AVULSOS E MANUTENÇÃO PRESENCIAL</h4>
+                    <p class="mb-6">4.1. Visita Técnica Presencial e Pré-Contrato: A realização de visitas presenciais técnicas, seja para levantamento de projeto físico ou manutenção avulsa, ocorrerá <strong>exclusivamente mediante a assinatura prévia de um pré-contrato e o pagamento de Sinal</strong>. Todos os custos incorridos com a realização da visita (deslocamento, viagem, hospedagem e alimentação) correrão por conta exclusiva e antecipada da CONTRATANTE, sendo a intervenção faturada adicionalmente a R$ 100,00 (cem reais) por hora técnica no local.</p>
+
+                    <h4 class="font-bold mt-6 mb-2 uppercase">CLÁUSULA QUINTA – DA VIGÊNCIA E RESCISÃO</h4>
+                    <p class="mb-2">5.1. Prazo de Vigência: 36 (trinta e seis) meses, com reajuste anual pelo IPCA.</p>
+                    <p class="mb-6">5.2. Em caso de rescisão imotivada pleiteada pela CONTRATANTE dentro dos primeiros 12 (doze) meses de vigência, incidirá multa de 50% sobre as mensalidades vincendas até a conclusão do 12º mês. Transcorridos 12 (doze) meses, a CONTRATANTE gozará de isenção integral da multa rescisória (Aviso prévio de 30 dias).</p>
+
+                    <p class="mb-10 mt-10">São Paulo - SP, <span id="doc-data" class="font-bold"></span>.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                        <div>
+                            <div class="border-b border-gray-400 w-full mb-2"></div>
+                            <p><strong>CONTRATADA (SyncGastro):</strong><br>EDINO FERREIRA BENTO JUNIOR<br>CNPJ: 36.398.976/0001-01<br>CPF: 324.905.178-05<br>Endereço: <span class="doc-field">[Endereço da Sede SyncGastro]</span></p>
+                        </div>
+                        <div>
+                            <div class="border-b border-gray-400 w-full mb-2"></div>
+                            <p><strong>CONTRATANTE:</strong><br><span class="out-razao doc-field">[RAZÃO SOCIAL DO RESTAURANTE]</span><br>Nome Fantasia: <span class="out-fantasia doc-field">[Nome Fantasia]</span><br>CNPJ: <span class="out-cnpj doc-field">[00.000.000/0001-00]</span><br>Endereço da Empresa: <span class="out-endereco doc-field">[Endereço Completo]</span><br>Representante: <span class="out-admin-nome doc-field">[Nome do Administrador]</span><br>CPF: <span class="out-admin-cpf doc-field">[000.000.000-00]</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aceite e Botão -->
+                <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                    <label class="flex items-center text-sm font-medium text-gray-700 cursor-pointer">
+                        <input type="checkbox" id="aceite-termos" class="mr-2 w-5 h-5 text-primary border-gray-300 rounded" onchange="toggleSignButton()">
+                        Li e concordo com os termos preenchidos.
+                    </label>
+                    <button id="btn-assinar" disabled class="bg-gray-400 text-white font-bold py-3 px-8 rounded-lg shadow cursor-not-allowed transition flex items-center">
+                        <i class="fa-solid fa-file-signature mr-2"></i> Assinar Digitalmente
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-secondary text-gray-400 py-8 text-center text-sm mt-auto">
+        <p>&copy; 2024 SyncGastro. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        const today = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('doc-data').innerText = today.toLocaleDateString('pt-BR', options);
+
+        function resetAnimations(tabId) {
+            const elements = document.getElementById(tabId).querySelectorAll('.anim-enter');
+            elements.forEach(el => {
+                el.style.animation = 'none';
+                el.offsetHeight; /* trigger reflow */
+                el.style.animation = null; 
+                el.classList.add('animate-slide-up');
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            
+            const targetTab = document.getElementById(tabId);
+            targetTab.classList.add('active');
+            
+            document.querySelectorAll(`.nav-link[data-target="${tabId}"]`).forEach(link => link.classList.add('active'));
+            
+            resetAnimations(tabId);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleGarcom(isGarcom) {
+            const box = document.getElementById('box-garcons');
+            const input = document.getElementById('qtd-garcons');
+            if(isGarcom) {
+                box.classList.remove('hidden');
+                if(input.value == 0) input.value = 4;
+            } else {
+                box.classList.add('hidden');
+                input.value = 0;
+            }
+        }
+
+        function updateCalculator() {
+            let mesas = parseInt(document.getElementById('qtd-mesas').value) || 0;
+            let garcons = parseInt(document.getElementById('qtd-garcons').value) || 0;
+            
+            // Garantir que mínimo de 1 para obrigatórios (Cozinha e Mesas)
+            if(mesas < 1) { mesas = 1; document.getElementById('qtd-mesas').value = 1; }
+            let telasCoz = parseInt(document.getElementById('qtd-telas-coz').value) || 0;
+            if(telasCoz < 1) { telasCoz = 1; document.getElementById('qtd-telas-coz').value = 1; }
+
+            let telasBar = parseInt(document.getElementById('qtd-telas-bar').value) || 0;
+            let telasAdmin = parseInt(document.getElementById('qtd-telas-admin').value) || 0;
+
+            let totalTelas = telasCoz + telasBar + telasAdmin;
+
+            // Interface UI de Equipamentos
+            document.getElementById('res-placas').innerText = mesas;
+            document.getElementById('res-telas').innerText = totalTelas;
+            document.getElementById('res-celulares').innerText = garcons;
+
+            // Cálculos Setup
+            let setupApp = 10000;
+            let setupPlacas = mesas * 100;
+            let setupTelas = totalTelas * 1600;
+            let setupCelulares = garcons * 100;
+            let setupTotal = setupApp + setupPlacas + setupTelas + setupCelulares;
+            
+            // Cálculos Mensalidade
+            let mensalPlacas = mesas * 50;
+            let mensalTelas = totalTelas * 600;
+            let mensalCelulares = garcons * 100;
+            let mensalidadeTotal = mensalPlacas + mensalTelas + mensalCelulares;
+
+            const formatBR = val => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Atualiza UI Resumo Financeiro
+            const elSetup = document.getElementById('val-setup-total');
+            const elMensal = document.getElementById('val-mensalidade');
+            elSetup.innerText = formatBR(setupTotal);
+            elMensal.innerText = formatBR(mensalidadeTotal);
+
+            // Pop animation on update
+            elSetup.classList.remove('scale-105', 'text-yellow-400');
+            elMensal.classList.remove('scale-105', 'text-yellow-400');
+            void elSetup.offsetWidth;
+            elSetup.classList.add('scale-105', 'text-yellow-400', 'transition', 'duration-300');
+            elMensal.classList.add('scale-105', 'text-yellow-400', 'transition', 'duration-300');
+            setTimeout(() => {
+                elSetup.classList.remove('scale-105', 'text-yellow-400');
+                elMensal.classList.remove('scale-105', 'text-yellow-400');
+            }, 300);
+
+            // Atualiza UI Contrato (Quantidades)
+            document.querySelectorAll('.out-mesas').forEach(el => el.innerText = mesas);
+            document.querySelectorAll('.out-garcons').forEach(el => el.innerText = garcons);
+            document.querySelectorAll('.out-telas-coz').forEach(el => el.innerText = telasCoz);
+            document.querySelectorAll('.out-telas-bar').forEach(el => el.innerText = telasBar);
+            document.querySelectorAll('.out-telas-admin').forEach(el => el.innerText = telasAdmin);
+            document.querySelectorAll('.out-telas-total').forEach(el => el.innerText = totalTelas);
+
+            // Atualiza UI Contrato (Valores)
+            document.querySelectorAll('.out-setup-placas').forEach(el => el.innerText = formatBR(setupPlacas));
+            document.querySelectorAll('.out-setup-telas').forEach(el => el.innerText = formatBR(setupTelas));
+            document.querySelectorAll('.out-setup-cels').forEach(el => el.innerText = formatBR(setupCelulares));
+            document.querySelectorAll('.out-setup-total-calc').forEach(el => el.innerText = formatBR(setupTotal));
+
+            document.querySelectorAll('.out-mensal-placas').forEach(el => el.innerText = formatBR(mensalPlacas));
+            document.querySelectorAll('.out-mensal-telas').forEach(el => el.innerText = formatBR(mensalTelas));
+            document.querySelectorAll('.out-mensal-cels').forEach(el => el.innerText = formatBR(mensalCelulares));
+            document.querySelectorAll('.out-mensalidade-calc').forEach(el => el.innerText = formatBR(mensalidadeTotal));
+        }
+
+        function syncLeadToContract() {
+            // Sincroniza dados rápidos digitados na Aba Orçamento direto pro Contrato
+            const fantasia = document.getElementById('lead-nome-fantasia').value;
+            const nome = document.getElementById('lead-nome').value;
+            
+            document.getElementById('inp-fantasia').value = fantasia;
+            document.getElementById('inp-admin-nome').value = nome;
+            
+            syncFormToContract();
+        }
+
+        function syncFormToContract() {
+            const mappings = {
+                'inp-razao': 'out-razao',
+                'inp-fantasia': 'out-fantasia',
+                'inp-cnpj': 'out-cnpj',
+                'inp-endereco': 'out-endereco',
+                'inp-admin-nome': 'out-admin-nome',
+                'inp-admin-cpf': 'out-admin-cpf'
+            };
+
+            for (let [inputId, classOut] of Object.entries(mappings)) {
+                let val = document.getElementById(inputId).value;
+                document.querySelectorAll(`.${classOut}`).forEach(el => {
+                    if(val.trim() === '') {
+                        el.innerText = `[${el.getAttribute('data-placeholder') || 'Vazio'}]`;
+                        el.classList.remove('filled');
+                    } else {
+                        el.innerText = val;
+                        el.classList.add('filled');
+                    }
+                });
+            }
+        }
+
+        document.querySelectorAll('.doc-field').forEach(el => {
+            if(!el.getAttribute('data-placeholder')) {
+                el.setAttribute('data-placeholder', el.innerText.replace(/[\[\]]/g, ''));
+            }
+        });
+
+        function toggleSignButton() {
+            const checkbox = document.getElementById('aceite-termos');
+            const btn = document.getElementById('btn-assinar');
+            if (checkbox.checked) {
+                btn.disabled = false;
+                btn.classList.replace('bg-gray-400', 'bg-green-600');
+                btn.classList.replace('cursor-not-allowed', 'cursor-pointer');
+                btn.onclick = () => alert('Contrato assinado! Redirecionando para o gateway de pagamento...');
+            } else {
+                btn.disabled = true;
+                btn.classList.replace('bg-green-600', 'bg-gray-400');
+                btn.classList.replace('cursor-pointer', 'cursor-not-allowed');
+                btn.onclick = null;
+            }
+        }
+
+        let currentLeadId = null;
+
+        async function enviarOrcamento() {
+            const btn = event.currentTarget;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Salvando...';
+            btn.disabled = true;
+
+            const payload = {
+                nomeFantasia: document.getElementById('lead-nome-fantasia').value,
+                responsavel: document.getElementById('lead-nome').value,
+                telefone: document.getElementById('lead-telefone').value,
+                email: document.getElementById('lead-email').value,
+                qtdMesas: parseInt(document.getElementById('qtd-mesas').value),
+                qtdGarcons: parseInt(document.getElementById('qtd-garcons').value),
+                telasCozinha: parseInt(document.getElementById('qtd-telas-coz').value),
+                telasBar: parseInt(document.getElementById('qtd-telas-bar').value),
+                telasCaixa: parseInt(document.getElementById('qtd-telas-admin').value),
+                setupTotal: parseFloat(document.getElementById('val-setup-total').innerText.replace(/[^\d,]/g, '').replace(',', '.')),
+                mensalidade: parseFloat(document.getElementById('val-mensalidade').innerText.replace(/[^\d,]/g, '').replace(',', '.'))
+            };
+
+            if(!payload.nomeFantasia || !payload.telefone) {
+                alert('Por favor, preencha o Nome Fantasia e o Telefone para enviar o orçamento.');
+                btn.innerHTML = 'Enviar Orçamento <i class="fa-solid fa-paper-plane ml-2"></i>';
+                btn.disabled = false;
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/orcamento', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    currentLeadId = data.lead_id;
+                }
+            } catch (err) {
+                console.warn('Backend não disponível (ou indisponível). Fluxo continuará offline.', err);
+            }
+
+            const texto = `Olá Edino! Acabei de fazer um pré-cadastro de orçamento para o restaurante *${payload.nomeFantasia}*.\n\n*Meu Nome:* ${payload.responsavel || 'Não informado'}\n*Mesas:* ${payload.qtdMesas}\n*Setup:* R$ ${payload.setupTotal}\n*Mensal:* R$ ${payload.mensalidade}\n\nGostaria de avançar com o atendimento.`;
+            const zapLink = `https://wa.me/5511939014534?text=${encodeURIComponent(texto)}`;
+            const mailLink = `mailto:edi.ben.jr@gmail.com?subject=Orçamento - ${encodeURIComponent(payload.nomeFantasia)}&body=${encodeURIComponent(texto)}`;
+
+            document.getElementById('link-whatsapp').href = zapLink;
+            document.getElementById('link-email').href = mailLink;
+
+            document.getElementById('box-envio-orcamento').classList.add('hidden');
+            document.getElementById('box-pos-envio').classList.remove('hidden');
+        }
+
+        async function agendarVisita() {
+            if(!currentLeadId) {
+                alert('Por favor, envie o orçamento primeiro para salvar seu pré-cadastro. (Ou verifique se o servidor backend está rodando)');
+                return;
+            }
+            
+            const data = prompt('Qual seria a data/horário ideal para a visita técnica? (Ex: Próxima terça à tarde)');
+            if(data) {
+                try {
+                    await fetch('http://localhost:3000/api/visita', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lead_id: currentLeadId, data_visita: data, observacoes: '' })
+                    });
+                    alert('Solicitação de visita agendada salva com sucesso!');
+                } catch(err) {
+                    alert('Erro ao salvar agendamento de visita no backend.');
+                }
+            }
+        }
+
+        window.onload = () => {
+            updateCalculator();
+            syncFormToContract();
+            resetAnimations('inicio');
+        };
+    </script>
+</body>
+</html>
