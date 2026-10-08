@@ -73,7 +73,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center cursor-pointer hover:scale-105 transition transform relative w-56 md:w-72 h-full" onclick="switchTab('inicio')">
-                    <img src="./assets/logo.png" alt="SyncGastro Logo" class="absolute top-0 -left-4 sm:-left-6 lg:-left-8 h-20 md:h-28 w-auto drop-shadow-xl z-[100]" style="max-width: none;">
+                    <img src="./assets/logo.jpg" alt="SyncGastro Logo" class="absolute top-0 -left-4 sm:-left-6 lg:-left-8 h-20 md:h-28 w-auto drop-shadow-xl z-[100]" style="max-width: none;">
                 </div>
                 <nav class="hidden md:flex space-x-8 h-full">
                     <button onclick="switchTab('inicio')" class="nav-link active h-full px-1 inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition" data-target="inicio">Início</button>
@@ -347,8 +347,32 @@
                         </div>
                         <h3 class="text-xl font-bold mb-6 border-b pb-2 relative z-10"><i class="fa-solid fa-users-gear text-primary mr-2"></i> Configuração dos Módulos</h3>
                         
+                        <div class="mb-6 relative z-10">
+                            <label class="block text-sm font-bold text-gray-800 mb-2">Tamanho do Negócio (Plano)</label>
+                            <select id="tipo-plano" class="w-full bg-white border border-primary rounded-lg p-3 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition shadow-sm" onchange="changePlan(); updateCalculator();">
+                                <option value="pequeno">Barraquinha / Pequeno Negócio</option>
+                                <option value="foodtruck">Food Truck / Delivery</option>
+                                <option value="lanchonete">Lanchonete / Fast-Food</option>
+                                <option value="restaurante" selected>Restaurante à La Carte</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-6 relative z-10 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <label class="block text-sm font-bold text-yellow-900 mb-2">Fornecimento de Equipamentos</label>
+                            <div class="flex flex-col gap-2">
+                                <label class="flex items-center text-sm cursor-pointer text-yellow-800">
+                                    <input type="radio" name="origem_hardware" value="proprio" class="mr-2 text-primary" onchange="updateCalculator()"> 
+                                    <strong>Vou usar meus próprios equipamentos</strong> (Tablets/Celulares do estabelecimento)
+                                </label>
+                                <label class="flex items-center text-sm cursor-pointer text-yellow-800">
+                                    <input type="radio" name="origem_hardware" value="syncgastro" class="mr-2 text-primary" checked onchange="updateCalculator()"> 
+                                    <strong>Quero os equipamentos da SyncGastro</strong> (Telas industriais e celulares)
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Módulos Obrigatórios -->
-                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Módulos Básicos (Obrigatórios)</h4>
+                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Configuração Extra (Para Lanchonete/Restaurante)</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Cardápio / Mesas (Qtd)</label>
@@ -405,20 +429,20 @@
                             <h4 class="font-bold text-blue-900 text-sm mb-2"><i class="fa-solid fa-boxes-stacked mr-1"></i> Orçamento Detalhado dos Ativos:</h4>
                             <ul class="text-sm text-blue-800 space-y-2">
                                 <li class="flex justify-between border-b border-blue-200 pb-1">
-                                    <span><span class="font-bold">1</span> Aplicação Base (Licença)</span>
-                                    <span class="font-bold">R$ 10.000,00</span>
+                                    <span><span class="font-bold">1</span> Licença / Setup do Projeto</span>
+                                    <span id="res-licenca" class="font-bold">R$ 10.000,00</span>
                                 </li>
                                 <li class="flex justify-between border-b border-blue-200 pb-1">
-                                    <span><span id="res-placas" class="font-bold">25</span> Placas de Mesa</span>
-                                    <span>(R$ 100 setup | R$ 50 mensais)</span>
+                                    <span><span id="res-placas" class="font-bold">25</span> Placas / Mesas</span>
+                                    <span id="res-mensal-placas">(Incluído)</span>
                                 </li>
                                 <li class="flex justify-between border-b border-blue-200 pb-1">
-                                    <span><span id="res-telas" class="font-bold">3</span> Telas KDS/Caixa</span>
-                                    <span>(R$ 1.600 setup | R$ 600 mensais)</span>
+                                    <span><span id="res-telas" class="font-bold">3</span> Telas KDS/Caixa/Bar</span>
+                                    <span id="res-mensal-telas">(R$ 600/mês cada)</span>
                                 </li>
                                 <li class="flex justify-between pb-1">
-                                    <span><span id="res-celulares" class="font-bold">4</span> Celulares</span>
-                                    <span>(R$ 100 setup | R$ 100 mensais)</span>
+                                    <span><span id="res-celulares" class="font-bold">4</span> Apps de Garçom</span>
+                                    <span id="res-mensal-garcons">(R$ 100/mês cada)</span>
                                 </li>
                             </ul>
                         </div>
@@ -437,7 +461,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">Telefone / WhatsApp</label>
-                                    <input type="tel" id="lead-telefone" placeholder="(00) 00000-0000" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition">
+                                    <input type="tel" id="lead-telefone" placeholder="(00) 00000-0000" class="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-primary focus:border-primary transition" oninput="maskPhone(event)">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-bold text-gray-700 mb-1">E-mail Comercial</label>
@@ -658,6 +682,29 @@
             });
         }
 
+        function maskPhone(e) {
+            let val = e.target.value.replace(/\D/g, ''); 
+            if (val.length > 11) {
+                val = val.substring(0, 11);
+            }
+            if (val.length === 0) {
+                e.target.value = '';
+                return;
+            }
+            
+            let mask = '';
+            if (val.length <= 2) {
+                mask = '(' + val;
+            } else if (val.length <= 6) {
+                mask = '(' + val.substring(0, 2) + ') ' + val.substring(2);
+            } else if (val.length <= 10) {
+                mask = '(' + val.substring(0, 2) + ') ' + val.substring(2, 6) + '-' + val.substring(6);
+            } else {
+                mask = '(' + val.substring(0, 2) + ') ' + val.substring(2, 7) + '-' + val.substring(7);
+            }
+            e.target.value = mask;
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
@@ -683,39 +730,88 @@
             }
         }
 
+        function changePlan() {
+            // Removemos as travas. Tudo é opcional e o cliente pode preencher como quiser.
+        }
+
         function updateCalculator() {
+            const plano = document.getElementById('tipo-plano').value;
+            const origemHardware = document.querySelector('input[name="origem_hardware"]:checked').value;
+            
             let mesas = parseInt(document.getElementById('qtd-mesas').value) || 0;
             let garcons = parseInt(document.getElementById('qtd-garcons').value) || 0;
-            
-            // Garantir que mínimo de 1 para obrigatórios (Cozinha e Mesas)
-            if(mesas < 1) { mesas = 1; document.getElementById('qtd-mesas').value = 1; }
             let telasCoz = parseInt(document.getElementById('qtd-telas-coz').value) || 0;
-            if(telasCoz < 1) { telasCoz = 1; document.getElementById('qtd-telas-coz').value = 1; }
-
             let telasBar = parseInt(document.getElementById('qtd-telas-bar').value) || 0;
             let telasAdmin = parseInt(document.getElementById('qtd-telas-admin').value) || 0;
-
             let totalTelas = telasCoz + telasBar + telasAdmin;
 
-            // Interface UI de Equipamentos
+            let setupTotal = 0;
+            let mensalidadeTotal = 0;
+
+            if (plano === 'pequeno') {
+                setupTotal = 3000;
+                // Mensalidade é 500 base (mesmo com a tela), +100 por app de garçom
+                mensalidadeTotal = 500 + (garcons * 100);
+            } else if (plano === 'foodtruck') {
+                setupTotal = 5000;
+                if (origemHardware === 'syncgastro') {
+                    mensalidadeTotal = 750 + (totalTelas * 600) + (garcons * 100);
+                } else {
+                    mensalidadeTotal = 750; // Equipamento próprio, sem extra de hardware
+                }
+            } else if (plano === 'lanchonete') {
+                setupTotal = 10000;
+                if (origemHardware === 'syncgastro') {
+                    mensalidadeTotal = 1000 + (totalTelas * 600) + (garcons * 100); 
+                } else {
+                    mensalidadeTotal = 1000; 
+                }
+            } else if (plano === 'restaurante') {
+                setupTotal = 10000;
+                if (origemHardware === 'syncgastro') {
+                    mensalidadeTotal = (totalTelas * 600) + (garcons * 100);
+                    if (mensalidadeTotal === 0) mensalidadeTotal = 600; // mínimo 1 tela
+                } else {
+                    mensalidadeTotal = 1000;
+                }
+            }
+
+            // Calculo Adicional de Hardware Físico (se SyncGastro)
+            if (origemHardware === 'syncgastro') {
+                setupTotal += (garcons * 700) + (totalTelas * 1600);
+            }
+
+            // Calculo Placas Adicionais (1 Inclusa na base)
+            let placasExtras = Math.max(0, mesas - 1);
+            setupTotal += (placasExtras * 100);
+            mensalidadeTotal += (placasExtras * 50);
+
+            // Para exibir nos resumos, reajustamos os breakdowns apenas visualmente
+            const formatBR = val => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            // Mostra apenas a licença base no item 1 do breakdown
+            let baseSetup = 10000;
+            if (plano === 'pequeno') baseSetup = 3000;
+            else if (plano === 'foodtruck') baseSetup = 5000;
+            
+            document.getElementById('res-licenca').innerText = formatBR(baseSetup);
             document.getElementById('res-placas').innerText = mesas;
             document.getElementById('res-telas').innerText = totalTelas;
             document.getElementById('res-celulares').innerText = garcons;
 
-            // Cálculos Setup
-            let setupApp = 10000;
-            let setupPlacas = mesas * 100;
-            let setupTelas = totalTelas * 1600;
-            let setupCelulares = garcons * 100;
-            let setupTotal = setupApp + setupPlacas + setupTelas + setupCelulares;
-            
-            // Cálculos Mensalidade
-            let mensalPlacas = mesas * 50;
-            let mensalTelas = totalTelas * 600;
-            let mensalCelulares = garcons * 100;
-            let mensalidadeTotal = mensalPlacas + mensalTelas + mensalCelulares;
+            if (placasExtras > 0) {
+                document.getElementById('res-mensal-placas').innerText = `(+R$ ${placasExtras * 100} setup | +R$ ${placasExtras * 50}/mês)`;
+            } else {
+                document.getElementById('res-mensal-placas').innerText = '(1 Inclusa na Base)';
+            }
 
-            const formatBR = val => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            if (origemHardware === 'proprio' && (plano === 'pequeno' || plano === 'foodtruck' || plano === 'restaurante' || plano === 'lanchonete')) {
+                document.getElementById('res-mensal-telas').innerText = '(Uso Próprio)';
+                document.getElementById('res-mensal-garcons').innerText = '(App: R$ 100/mês cada)';
+            } else {
+                document.getElementById('res-mensal-telas').innerText = '(+R$ 1.600 setup | +R$ 600/mês cada)';
+                document.getElementById('res-mensal-garcons').innerText = '(+R$ 700 setup | +R$ 100/mês cada)';
+            }
 
             // Atualiza UI Resumo Financeiro
             const elSetup = document.getElementById('val-setup-total');
