@@ -777,15 +777,27 @@
                 }
             }
 
-            // Calculo Adicional de Hardware Físico (se SyncGastro)
+            let placasExtras = Math.max(0, mesas - 1);
+            let setupPlacas = placasExtras * 100;
+            let mensalPlacas = placasExtras * 50;
+            
+            let setupTelas = 0;
+            let mensalTelas = 0;
+            let setupCelulares = 0;
+            let mensalCelulares = garcons * 100; // Licença do app é 100/mês sempre
+            
+            // Calculo Adicional de Telas (Hardware e Software)
             if (origemHardware === 'syncgastro') {
-                setupTotal += (garcons * 700) + (totalTelas * 1600);
+                setupTelas = (totalTelas * 1600);
+                mensalTelas = (totalTelas * 600);
+                setupCelulares = (garcons * 700);
+            } else {
+                // Se o equipamento for próprio, a licença/configuração de cada tela extra (KDS, Bar, Admin) custa 500 reais de setup.
+                setupTelas = (totalTelas * 500);
             }
 
-            // Calculo Placas Adicionais (1 Inclusa na base)
-            let placasExtras = Math.max(0, mesas - 1);
-            setupTotal += (placasExtras * 100);
-            mensalidadeTotal += (placasExtras * 50);
+            setupTotal += setupTelas + setupCelulares + setupPlacas;
+            mensalidadeTotal += mensalTelas + mensalCelulares + mensalPlacas;
 
             // Para exibir nos resumos, reajustamos os breakdowns apenas visualmente
             const formatBR = val => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -806,9 +818,9 @@
                 document.getElementById('res-mensal-placas').innerText = '(1 Inclusa na Base)';
             }
 
-            if (origemHardware === 'proprio' && (plano === 'pequeno' || plano === 'foodtruck' || plano === 'restaurante' || plano === 'lanchonete')) {
-                document.getElementById('res-mensal-telas').innerText = '(Uso Próprio)';
-                document.getElementById('res-mensal-garcons').innerText = '(App: R$ 100/mês cada)';
+            if (origemHardware === 'proprio') {
+                document.getElementById('res-mensal-telas').innerText = `(+R$ 500 licença por tela)`;
+                document.getElementById('res-mensal-garcons').innerText = '(App: +R$ 100/mês cada)';
             } else {
                 document.getElementById('res-mensal-telas').innerText = '(+R$ 1.600 setup | +R$ 600/mês cada)';
                 document.getElementById('res-mensal-garcons').innerText = '(+R$ 700 setup | +R$ 100/mês cada)';
@@ -848,6 +860,7 @@
             document.querySelectorAll('.out-mensal-placas').forEach(el => el.innerText = formatBR(mensalPlacas));
             document.querySelectorAll('.out-mensal-telas').forEach(el => el.innerText = formatBR(mensalTelas));
             document.querySelectorAll('.out-mensal-cels').forEach(el => el.innerText = formatBR(mensalCelulares));
+
             document.querySelectorAll('.out-mensalidade-calc').forEach(el => el.innerText = formatBR(mensalidadeTotal));
         }
 
