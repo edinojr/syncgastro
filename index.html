@@ -350,10 +350,10 @@
                         <div class="mb-6 relative z-10">
                             <label class="block text-sm font-bold text-gray-800 mb-2">Tamanho do Negócio (Plano)</label>
                             <select id="tipo-plano" class="w-full bg-white border border-primary rounded-lg p-3 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition shadow-sm" onchange="changePlan(); updateCalculator();">
-                                <option value="pequeno">Barraquinha / Pequeno Negócio</option>
+                                <option value="pequeno" selected>Barraquinha / Pequeno Negócio</option>
                                 <option value="foodtruck">Food Truck / Delivery</option>
                                 <option value="lanchonete">Lanchonete / Fast-Food</option>
-                                <option value="restaurante" selected>Restaurante à La Carte</option>
+                                <option value="restaurante">Restaurante à La Carte</option>
                             </select>
                         </div>
 
@@ -361,22 +361,22 @@
                             <label class="block text-sm font-bold text-yellow-900 mb-2">Fornecimento de Equipamentos</label>
                             <div class="flex flex-col gap-2">
                                 <label class="flex items-center text-sm cursor-pointer text-yellow-800">
-                                    <input type="radio" name="origem_hardware" value="proprio" class="mr-2 text-primary" onchange="updateCalculator()"> 
+                                    <input type="radio" name="origem_hardware" value="proprio" class="mr-2 text-primary" checked onchange="updateCalculator()"> 
                                     <strong>Vou usar meus próprios equipamentos</strong> (Tablets/Celulares do estabelecimento)
                                 </label>
                                 <label class="flex items-center text-sm cursor-pointer text-yellow-800">
-                                    <input type="radio" name="origem_hardware" value="syncgastro" class="mr-2 text-primary" checked onchange="updateCalculator()"> 
+                                    <input type="radio" name="origem_hardware" value="syncgastro" class="mr-2 text-primary" onchange="updateCalculator()"> 
                                     <strong>Quero os equipamentos da SyncGastro</strong> (Telas industriais e celulares)
                                 </label>
                             </div>
                         </div>
 
                         <!-- Módulos Obrigatórios -->
-                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Configuração Extra (Para Lanchonete/Restaurante)</h4>
+                        <h4 class="font-bold text-sm text-gray-800 mb-3 relative z-10">Configuração Extra</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Cardápio / Mesas (Qtd)</label>
-                                <input type="number" id="qtd-mesas" min="1" value="25" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <input type="number" id="qtd-mesas" min="1" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
                                 <p class="text-[10px] text-gray-500 mt-1">Placas QR Code ou NFC para autoatendimento.</p>
                             </div>
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
@@ -401,19 +401,19 @@
                             </div>
                             <div id="box-garcons">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Garçons (Qtd de Aparelhos)</label>
-                                <input type="number" id="qtd-garcons" min="0" value="4" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <input type="number" id="qtd-garcons" min="0" value="0" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 relative z-10">
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Bar / Bebidas (Telas)</label>
-                                <input type="number" id="qtd-telas-bar" min="0" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <input type="number" id="qtd-telas-bar" min="0" value="0" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
                                 <p class="text-[10px] text-gray-500 mt-1">Coloque 0 caso não queira separação de bar.</p>
                             </div>
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                 <label class="block text-xs font-bold text-gray-700 mb-1">Caixa / Administrativo (Telas)</label>
-                                <input type="number" id="qtd-telas-admin" min="0" value="1" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
+                                <input type="number" id="qtd-telas-admin" min="0" value="0" class="w-full bg-white border border-gray-300 rounded p-2 text-lg font-bold text-secondary focus:ring-primary focus:border-primary transition" oninput="updateCalculator()">
                                 <p class="text-[10px] text-gray-500 mt-1">Coloque 0 caso use tablet próprio.</p>
                             </div>
                         </div>
