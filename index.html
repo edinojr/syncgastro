@@ -930,8 +930,12 @@
                 // Devolve o visual normal da caixa de texto
                 element.classList.add('h-[600px]', 'overflow-y-auto');
                 btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Download Concluído!';
+                
                 setTimeout(() => {
-                    alert("O contrato em PDF foi baixado! Você já pode enviá-lo pelo WhatsApp junto com as dúvidas finais.");
+                    alert("O contrato em PDF foi baixado no seu dispositivo! Clique em OK para ser direcionado ao nosso WhatsApp para enviá-lo.");
+                    const texto = `Olá Edino! Acabei de baixar a minuta do contrato digital da SyncGastro para o restaurante *${razao}*. O PDF já está salvo comigo. Gostaria de dar o próximo passo para o setup!`;
+                    const zapLink = `https://wa.me/5511939014534?text=${encodeURIComponent(texto)}`;
+                    window.location.href = zapLink;
                 }, 1000);
             });
         }
