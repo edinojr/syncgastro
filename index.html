@@ -6,6 +6,7 @@
     <title>SyncGastro - Automação para Restaurantes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -898,13 +899,41 @@
                 btn.disabled = false;
                 btn.classList.replace('bg-gray-400', 'bg-green-600');
                 btn.classList.replace('cursor-not-allowed', 'cursor-pointer');
-                btn.onclick = () => alert('Contrato assinado! Redirecionando para o gateway de pagamento...');
+                btn.onclick = gerarContrato;
             } else {
                 btn.disabled = true;
                 btn.classList.replace('bg-green-600', 'bg-gray-400');
                 btn.classList.replace('cursor-pointer', 'cursor-not-allowed');
                 btn.onclick = null;
             }
+        }
+
+        function gerarContrato() {
+            const btn = document.getElementById('btn-assinar');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Gerando PDF...';
+            btn.disabled = true;
+
+            const element = document.querySelector('.legal-text');
+            // Remove as barras de rolagem para o PDF sair completo
+            element.classList.remove('h-[600px]', 'overflow-y-auto');
+
+            const razao = document.getElementById('inp-razao').value || 'Restaurante';
+            const opt = {
+                margin:       [15, 15, 15, 15],
+                filename:     `Contrato_SyncGastro_${razao.replace(/\s+/g, '_')}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, windowWidth: 800 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Devolve o visual normal da caixa de texto
+                element.classList.add('h-[600px]', 'overflow-y-auto');
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Download Concluído!';
+                setTimeout(() => {
+                    alert("O contrato em PDF foi baixado! Você já pode enviá-lo pelo WhatsApp junto com as dúvidas finais.");
+                }, 1000);
+            });
         }
 
         let currentLeadId = null;
