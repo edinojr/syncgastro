@@ -11,6 +11,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Database setup
 const db = new sqlite3.Database('./database.sqlite', (err) => {
     if (err) {
